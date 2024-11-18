@@ -1,10 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <sstream>
-#include <numeric>
 #include <algorithm>
-
 
 template <class T>
 using ELEM = std::vector<T>;
@@ -13,146 +10,157 @@ template <class T>
 using VEC = std::vector<ELEM<T>>;
 
 template <class T>
-using action_t = T (*) (T);
+using action_t = T (*) (int);
 
 template <class T>
 using pred_t = bool (*) (T);
 
 template <class T>
-using map_t = T (*) (T, T);
-
+using map_t = T (*) (T,T);
 
 template <class T>
-void printElem(const ELEM<T> &v) {
+void printElem(ELEM<T> &v) {
     std::cout << "[";
     for (size_t i = 0; i < v.size(); ++i) {
         std::cout << v[i];
-        if (i != v.size() - 1) std::cout << ", ";
+        if (i < v.size() - 1) std::cout << ",";
     }
     std::cout << "]";
 }
 
 template <class T>
-void initVec(VEC<T> &v, const ELEM<T> &cons) {
+void initVec(VEC<T> &v, ELEM<T> &&cons) {
     v.push_back(cons);
 }
 
-
 template <class T>
-void printVec(const VEC<T> &v) {
+void printVec(VEC<T> &v) {
     std::cout << "[";
     for (size_t i = 0; i < v.size(); ++i) {
         printElem(v[i]);
-        if (i != v.size() - 1) std::cout << ", ";
+        if (i < v.size() - 1) std::cout << ",";
     }
     std::cout << "]" << std::endl;
 }
 
 template <class T>
 VEC<T> generate(int N, action_t<T> f) {
-    VEC<T> vec;
-    for (int i = 0; i < N; ++i) {
-        ELEM<T> elem;
-        elem.push_back(f(i));
-        vec.push_back(elem);
-    }
-    return vec;
-}
-
-
-
-template <class T>
-VEC<T> zip(const VEC<T>& v, const VEC<T>& w) {
     VEC<T> result;
-    size_t rows = std::min(v.size(), w.size());
-    for (size_t i = 0; i < rows; ++i) {
-        ELEM<T> row;
-        size_t cols = std::min(v[i].size(), w[i].size());
-        for (size_t j = 0; j < cols; ++j) {
-            row.push_back(v[i][j]);
-            row.push_back(w[i][j]);
-        }
-        result.push_back(row);
+    for (T i = 1; i < N; ++i) {
+        result.push_back(ELEM<T>{f(i)});
     }
     return result;
 }
 
 template <class T>
-VEC<T> filter(const VEC<T> &v, pred_t<T> f) {
+VEC<T> zip(VEC<T>& v, VEC<T>& w) {
     VEC<T> result;
-    for (const auto &row : v) {
-        if (f(row[0])) {
-            result.push_back(row);
+    for (auto i = 0; i < v.size() && i < w.size(); ++i) {
+        result.push_back({});
+        for (auto j = 0; j < v[i].size() && j < w[i].size(); ++j) {
+            result[i].push_back(v[i][j]);
+            result[i].push_back(w[i][j]);
         }
     }
     return result;
 }
 
 template <class T>
-VEC<T> map(const VEC<T> &v, action_t<T> f) {
+VEC<T> filter(VEC<T>& v, pred_t<T> f) {
     VEC<T> result;
-    for (const auto &row : v) {
-        ELEM<T> mappedRow;
-        mappedRow.push_back(f(row[0]));
-        result.push_back(mappedRow);
+    for (auto& elem : v) {
+        ELEM<T> temp;
+        for (auto& val : elem) {
+            if (f(val)) temp.push_back(val);
+        }
+        if (!temp.empty())
+            result.push_back(temp);
     }
     return result;
 }
 
-template <class T, class Callable>
-ELEM<T> reduce(const VEC<T> &v, Callable f, ELEM<T> ident) { 
-    for (const auto &row : v) {
-        ident[0] = f(ident[0], row[0]);
+template <class T>
+VEC<T> map(VEC<T>& v, action_t<T> f) {
+    VEC<T> result;
+    for (auto& elem : v) {
+        ELEM<T> temp;
+        for (auto& val : elem) {
+            temp.push_back(f(val));
+            
+        }
+        result.push_back(temp); 
     }
-    return ident;
+    return result;
 }
 
+template <class T>
+ELEM<T> reduce(VEC<T>& v, map_t<T> f, ELEM<T> ident) {
+    ELEM<T> result = ident;
+    for (auto& elem : v) {
+        for (auto& val : elem) {
+            result[0] = f(result[0], val);
+        }
+    }
+    return result;
+}
 
-int square(int x) { return x * x; }
-bool isPositive(int x) { return x > 0; }
-int add(int a, int b) { return a + b; }
-int toBinary(int x) { return x >= 0 ? 1 : 0; }
+template<class T>
+T k(T i, T j) {
+    return i + j;
+}
 
-std::string concat(const std::string &a, const std::string &b) {
-    return a + b;
+//Test functions
+bool g(int x) {
+    return x > 0;
+}
+
+int h(int x) {
+    return x > 0 ? 1 : 0;
+}
+
+int f(int a) {
+    return a * a;
 }
 
 int main() {
     VEC<int> v;
     initVec(v, ELEM<int>{1, 2, 3, 4});
+
     VEC<int> w;
     initVec(w, ELEM<int>{-1, 3, -3, 4});
+
     printVec(v);
     std::cout << std::string(10, '*') << std::endl;
     printVec(w);
-
     std::cout << std::string(10, '*') << std::endl;
+
     VEC<int> z = zip(v, w);
     printVec(z);
-
     std::cout << std::string(10, '*') << std::endl;
+
     VEC<int> x = zip(z, z);
     printVec(x);
-
     std::cout << std::string(10, '*') << std::endl;
-    VEC<int> a = generate(10, square);
+
+    VEC<int> a = generate(10, f);
     printVec(a);
 
-    VEC<int> y = filter(w, isPositive);
+    VEC<int> y = filter(w, g);
     printVec(y);
 
-    VEC<int> u = map(w, toBinary);
+    VEC<int> u = map(w, h);
     printVec(u);
 
-    ELEM<int> e = reduce(u, add, ELEM<int>{0});
+    ELEM<int> e = reduce(u, k, ELEM<int>{0});
     printElem(e);
 
     std::cout << std::endl << std::string(10, '$') << std::endl;
+
     VEC<std::string> ws;
     initVec(ws, ELEM<std::string>{"hello", "there", "franco", "carlacci"});
     printVec(ws);
 
-    ELEM<std::string> es = reduce(ws, concat, ELEM<std::string>{""});
+    ELEM<std::string> es = reduce(ws, k, ELEM<std::string>{""});
     printElem(es);
 
     VEC<char> wc;
@@ -160,7 +168,7 @@ int main() {
     std::cout << std::endl << std::string(10, '$') << std::endl;
     printVec(wc);
 
-    ELEM<char> ec = reduce(wc, [](char a, char b) { return a > b ? a : b; }, ELEM<char>{' '});
+    ELEM<char> ec = reduce(wc, k, ELEM<char>{' '});
     std::cout << std::endl << std::string(10, '$') << std::endl;
     printElem(ec);
 
