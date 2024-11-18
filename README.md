@@ -62,7 +62,7 @@ To get started, follow these steps:
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/MrThomasAnthony/templates
-   cd 
+   cd templates
 
 2. **Install g++ (if not already installed):**
     ```bash
@@ -71,7 +71,7 @@ To get started, follow these steps:
 
 3. **Compile the program:**
     ```bash
-    g++ -o templates templates.cpp
+    g++ -o templates assignment5.cpp
 
 4. **Run the program:**
     ```bash
